@@ -6,7 +6,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 
-// Basic Configuration
+// Basic Configuration and mongoose setup
 const port = process.env.PORT || 3000;
 
 const urlSchema = new mongoose.Schema({
@@ -14,10 +14,40 @@ const urlSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true
+  },
+  short_url: {
+    type: String,
+    required: true,
+    unique: true
   }
 });
 
 const URLModel = new mongoose.model('URL', urlSchema);
+
+async function saveUrl(originalUrl) {
+  const { nanoid } = await import('nanoid');
+  let urlDoc;
+
+  while (!urlDoc) {
+    try {
+      urlDoc = new URLModel({
+        original_url: originalUrl,
+        short_url: nanoid(8)
+      });
+      await urlDoc.save();
+    } catch (err) {
+      if (err.code === 11000) {
+        console.log('Duplicate ID. Regenerating');
+        continue;
+      }
+      console.log(err);
+    }
+  }
+
+  return urlDoc;
+}
+
+// Express.js stuff
 
 app.use(cors());
 
@@ -51,10 +81,7 @@ app.post('/api/shorturl', async function(req, res) {
     let urlDoc = await URLModel.findOne({ original_url: urlObj.href }).exec();
 
     if (!urlDoc) {
-      urlDoc = new URLModel({
-        original_url: urlObj.href
-      });
-      await urlDoc.save();
+      urlDoc = await saveUrl(urlObj.href);
     }
     
     console.log(urlDoc);
@@ -65,9 +92,11 @@ app.post('/api/shorturl', async function(req, res) {
   res.json({ hey: 'this is a test :)' });
 });
 
+// Server start
+
 async function serverStart () {
   try {
-    mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGO_URI);
     app.listen(port, function() {
       console.log(`Listening on port ${port}`);
     });
