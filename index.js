@@ -94,6 +94,15 @@ app.post('/api/shorturl', async function(req, res) {
   }
 });
 
+app.get('/api/shorturl/:shorturl', async function(req, res) {
+  console.log(req.params);
+
+  let urlDoc = await URLModel.findOne({ short_url: req.params.shorturl });
+  console.log(urlDoc);
+  
+  res.redirect(urlDoc.original_url);
+})
+
 // Server start
 
 async function serverStart () {
