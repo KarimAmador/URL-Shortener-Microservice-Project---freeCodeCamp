@@ -78,10 +78,12 @@ app.post('/api/shorturl', async function(req, res) {
       })
     });
     
-    let urlDoc = await URLModel.findOne({ original_url: urlObj.href }).exec();
+    const originalUrl = urlObj.origin + (urlObj.pathname === '/' ? '' : urlObj.pathname);
+
+    let urlDoc = await URLModel.findOne({ original_url: originalUrl }).exec();
 
     if (!urlDoc) {
-      urlDoc = await saveUrl(urlObj.origin + (urlObj.pathname === '/' ? '' : urlObj.pathname));
+      urlDoc = await saveUrl(originalUrl);
     }
     
     console.log(urlDoc);
