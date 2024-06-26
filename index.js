@@ -68,6 +68,10 @@ app.post('/api/shorturl', async function(req, res) {
   console.log(req.body);
 
   try {
+    if (req.body.url.search(/^https?:\/\/.+/) === -1) {
+      throw new Error('invalid url');
+    }
+
     const urlObj = new URL(req.body.url);
     console.log(urlObj);
 
@@ -78,7 +82,7 @@ app.post('/api/shorturl', async function(req, res) {
       })
     });
     
-    const originalUrl = urlObj.origin + (urlObj.pathname === '/' ? '' : urlObj.pathname);
+    const originalUrl = urlObj.href.endsWith('/') ? urlObj.href[urlObj.href.length - 2] : urlObj.href;
 
     let urlDoc = await URLModel.findOne({ original_url: originalUrl }).exec();
 
@@ -90,7 +94,8 @@ app.post('/api/shorturl', async function(req, res) {
 
     res.json({ original_url: urlDoc.original_url, short_url: urlDoc.short_url });
   } catch (err) {
-    return res.json({ error: err.code === 'ERR_INVALID_URL' ? 'invalid url' : err.code });
+    console.log(err.toString());
+    return res.json({ error: err.toString().slice(7) });
   }
 });
 
