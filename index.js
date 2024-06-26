@@ -81,15 +81,15 @@ app.post('/api/shorturl', async function(req, res) {
     let urlDoc = await URLModel.findOne({ original_url: urlObj.href }).exec();
 
     if (!urlDoc) {
-      urlDoc = await saveUrl(urlObj.href);
+      urlDoc = await saveUrl(urlObj.origin + (urlObj.pathname === '/' ? '' : urlObj.pathname));
     }
     
     console.log(urlDoc);
-  } catch (err) {
-    return res.json({ error: err.code === 'ERR_INVALID_URL' ? 'invalid url' : 'invalid host' });
-  }
 
-  res.json({ hey: 'this is a test :)' });
+    res.json({ original_url: urlDoc.original_url, short_url: urlDoc.short_url });
+  } catch (err) {
+    return res.json({ error: err.code === 'ERR_INVALID_URL' ? 'invalid url' : err.code });
+  }
 });
 
 // Server start
