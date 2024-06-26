@@ -40,7 +40,8 @@ async function saveUrl(originalUrl) {
         console.log('Duplicate ID. Regenerating');
         continue;
       }
-      console.log(err);
+      console.error(err);
+      break;
     }
   }
 
